@@ -11,6 +11,9 @@ public class Coach {
     //отчество
     private String middleName;
 
+    private int countOfTrainings = 0;
+
+
     public Coach(String surname, String name, String middleName) {
         this.surname = surname;
         this.name = name;
@@ -41,4 +44,14 @@ public class Coach {
     public String getMiddleName() {
         return middleName;
     }
+
+    public int getCountOfTrainings() {
+        return countOfTrainings;
+    }
+
+    public void increaseCount() {
+        countOfTrainings++;
+    }
+
+
 }
