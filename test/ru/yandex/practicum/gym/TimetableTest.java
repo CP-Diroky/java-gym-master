@@ -120,7 +120,7 @@ public class TimetableTest {
                 DayOfWeek.THURSDAY, new TimeOfDay(10,0));
         timetable.addNewTrainingSession(trainingSession3);
 
-        Assertions.assertEquals(2, timetable.getCountByCoaches().get(0).getCountOfTrainings());
+        Assertions.assertEquals(2, timetable.getCountByCoaches().get(0).getCount());
     }
 
 

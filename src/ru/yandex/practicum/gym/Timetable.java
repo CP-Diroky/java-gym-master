@@ -11,23 +11,23 @@ public class Timetable {
         //сохраняем занятие в расписании
         /*
         Сперва в отдельные переменные вносим день недели и время тренировки (переменные day и time),
-        создаем переменную trainingsOfTime, которая хранит таблицу (TreeMap) со списками занятий, если такой таблицы нет,
+        создаем переменную trainingsForDay, которая хранит таблицу (TreeMap) со списками занятий, если такой таблицы нет,
         значит создаем.  Аналогично делаем со списком занятий listOfTrainings. После чего добавляем тренировку
-        в лист listOfTraining, а лист добавляем в trainingsOfTime, a trainingsOfTime добавляем в HashMap timetable.
+        в лист listOfTraining, а лист добавляем в trainingsForDay, a trainingsForDay добавляем в HashMap timetable.
          */
         DayOfWeek day = trainingSession.getDayOfWeek();
         TimeOfDay time = trainingSession.getTimeOfDay();
-        TreeMap<TimeOfDay, ArrayList<TrainingSession>> trainingsOfTime = timetable.get(day);
-        if (trainingsOfTime == null) {
-            trainingsOfTime = new TreeMap<>();
+        TreeMap<TimeOfDay, ArrayList<TrainingSession>> trainingsForDay = timetable.get(day);
+        if (trainingsForDay == null) {
+            trainingsForDay = new TreeMap<>();
+            timetable.put(day, trainingsForDay);
         }
-        ArrayList<TrainingSession> listOfTrainings = trainingsOfTime.get(time);
+        ArrayList<TrainingSession> listOfTrainings = trainingsForDay.get(time);
         if (listOfTrainings == null) {
             listOfTrainings = new ArrayList<>();
+            trainingsForDay.put(time, listOfTrainings);
         }
         listOfTrainings.add(trainingSession);
-        trainingsOfTime.put(time, listOfTrainings);
-        timetable.put(day, trainingsOfTime);
         System.out.println("Тренировка добавлена!");
     }
 
@@ -50,29 +50,22 @@ public class Timetable {
         } else return timetable.get(dayOfWeek).get(timeOfDay);
     }
 
-    public ArrayList<Coach> getCountByCoaches() { // метод для подсчета количества тренировок каждого тренера
-        /*
-        Сперва в методе переопределяется метод интерфейса Comparator, он нужен для сортировки тренеров по количеству
-        тренировок. Далее создаем список тренеров и проходимся по всей хэш таблице timetable,
-        занося уникальных тренеров в список coaches. После чего заново проходимся по хэш таблице и увеличиваем счетчик
-        у тех тренеров в списке coaches, чьи имена повторяются в хэш таблице timetable. Сортируем список coaches при
-        помощи sort, выводим имена тренеров и количество их тренировок.
-         */
-
-        Comparator<Coach> comparatorOfCoaches = (Coach coach1, Coach coach2) -> {
-            return coach2.getCountOfTrainings() - coach1.getCountOfTrainings();
+    public ArrayList<CounterOfTrainings> getCountByCoaches() {
+        // метод для подсчета количества тренировок каждого тренера
+        Comparator<CounterOfTrainings> comparator = (counter1, counter2) -> {
+            return counter2.getCount() - counter1.getCount();
         };
 
-        ArrayList<Coach> coaches = new ArrayList<>();
-
+        HashMap<Coach, Integer> coaches = new HashMap<>();
+        ArrayList<CounterOfTrainings> listOfCoaches = new ArrayList<>();
         for (TreeMap<TimeOfDay, ArrayList<TrainingSession>> trainingsOfTime : timetable.values()) {
             for (ArrayList<TrainingSession> listOfTraining : trainingsOfTime.values()) {
                 for (int i = 0; i < listOfTraining.size(); i++) {
-                    if (!(coaches.contains(listOfTraining.get(i).getCoach()))) {
-                        String surname = listOfTraining.get(i).getCoach().getSurname();
-                        String name = listOfTraining.get(i).getCoach().getName();
-                        String middleName = listOfTraining.get(i).getCoach().getMiddleName();
-                        coaches.add(new Coach(surname, name, middleName));
+                    Coach coach = listOfTraining.get(i).getCoach();
+                    if (!coaches.containsKey(coach)) {
+                        coaches.put(coach, 1);
+                    } else {
+                        coaches.put(coach, coaches.get(coach) + 1);
                     }
                 }
             }
@@ -83,25 +76,20 @@ public class Timetable {
             return null;
         }
 
-
-        for (TreeMap<TimeOfDay, ArrayList<TrainingSession>> trainingsOfTime : timetable.values()) {
-            for (ArrayList<TrainingSession> listOfTraining : trainingsOfTime.values()) {
-                for (int i = 0; i < listOfTraining.size(); i++) {
-                    if (coaches.contains(listOfTraining.get(i).getCoach())) {
-                        int index = coaches.indexOf(listOfTraining.get(i).getCoach());
-                        coaches.get(index).increaseCount();
-                    }
-                }
-            }
+        for (Map.Entry<Coach, Integer> coach : coaches.entrySet()) {
+            listOfCoaches.add(new CounterOfTrainings(coach.getKey(), coach.getValue()));
         }
 
-        coaches.sort(comparatorOfCoaches); // сортируем список coaches
+        listOfCoaches.sort(comparator);
 
-        for (int i = 0; i < coaches.size(); i++) {
-            System.out.println("Тренер: " + coaches.get(i).getSurname() + " " + coaches.get(i).getName() + " "
-                    + coaches.get(i).getMiddleName() + ", количество тренировок: " + coaches.get(i).getCountOfTrainings());
+        for (int i = 0; i < listOfCoaches.size(); i++) {
+            System.out.println("Тренер: " + listOfCoaches.get(i).getCoach().getSurname() + " "
+                    + listOfCoaches.get(i).getCoach().getName()
+                    + " " + listOfCoaches.get(i).getCoach().getMiddleName() + ", количество тренировок: "
+                    + listOfCoaches.get(i).getCount());
         }
-        return coaches;
+        return listOfCoaches;
+
     }
 
     public HashMap<DayOfWeek, TreeMap<TimeOfDay, ArrayList<TrainingSession>>> getTimetable() {
